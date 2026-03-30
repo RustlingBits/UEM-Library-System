@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibliotheca – Library Management System</title>
+<meta name="theme-color" content="#7c3aed">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="mTitle"></h3>
+    <p id="mBody"></p>
+    <div class="modal-acts">
+      <button class="btn-cancel-m" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger-m" id="mConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="reviewModalBg">
+  <div class="modal" style="text-align:center">
+    <h3 style="font-size:2.5rem; margin-bottom:10px">â­</h3>
+    <h3>Rate this Book</h3>
+    <p id="reviewBkTitle" style="margin-bottom:20px; color:var(--text-muted)"></p>
+    
+    <div id="starContainer" style="font-size:2.5rem; cursor:pointer; margin-bottom:20px; display:flex; justify-content:center; gap:8px;">
+      <span onclick="setRating(1)">â˜†</span><span onclick="setRating(2)">â˜†</span>
+      <span onclick="setRating(3)">â˜†</span><span onclick="setRating(4)">â˜†</span><span onclick="setRating(5)">â˜†</span>
+    </div>
+    
+    <div class="modal-acts" style="justify-content:center">
+      <button class="btn-cancel-m" onclick="closeReview()">Skip</button>
+      <button class="btn-prim" id="submitReviewBtn" style="display:none" onclick="submitReview()">Submit Rating</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="detailsModalBg">
+  <div class="modal" style="max-width: 650px; display: flex; gap: 24px; flex-wrap: wrap; text-align: left;">
+    
+    <div style="flex: 1; min-width: 160px; display: flex; flex-direction: column; align-items: center;">
+      <div id="detCover" class="bk-art" style="width: 100%; aspect-ratio: 3/4; border-radius: 16px; font-size: 4rem; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.3);"></div>
+      <div id="detRating" style="font-size: 1.25rem; font-weight: bold; color: #fbbf24;"></div>
+    </div>
+    
+    <div style="flex: 2; min-width: 260px;">
+      <h2 id="detTitle" style="font-size: 2.2rem; margin-bottom: 6px; line-height: 1.1;"></h2>
+      <h4 id="detAuthor" style="color: var(--text-muted); margin-bottom: 16px; font-size: 1.1rem;"></h4>
+      <span id="detGenre" class="bk-genre" style="font-size: 0.85rem; padding: 4px 10px; margin-bottom: 18px; display: inline-block;"></span>
+      
+      <p id="detSynopsis" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px; opacity: 0.9;"></p>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; background: var(--glass); padding: 16px; border-radius: 14px; border: 1px solid var(--glass-border);">
+        <div><strong>Published:</strong> <span id="detYear"></span></div>
+        <div><strong>ISBN:</strong> <span id="detISBN"></span></div>
+        <div><strong>Status:</strong> <span id="detStatus" style="font-weight:bold;"></span></div>
+        <div><strong>Total Copies:</strong> <span id="detCopies"></span></div>
+      </div>
+      
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-prim" id="btnLocate" onclick="openMap()" style="background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">📍 Locate on Map</button>
+        <button class="btn-cancel-m" onclick="closeDetails()">Close Window</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="mapModalBg" style="z-index: 600;">
+  <div class="modal" style="max-width: 700px; text-align: center;">
+    <h2 style="margin-bottom: 5px; font-size: 2rem;">🗺️ Library Map</h2>
+    <p id="mapStatusText" style="color: var(--text-muted); margin-bottom: 24px;">Locating...</p>
+    
+    <div id="libraryGrid" class="lib-map"></div>
+    
+    <button class="btn-cancel-m" onclick="closeMap()" style="margin-top: 24px;">Return to Book Details</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="scannerModalBg" style="z-index: 600;">
+  <div class="modal" style="max-width: 500px;">
+    <h2 style="margin-bottom: 20px; font-size: 2rem;">📱 Quick Checkout</h2>
+    
+    <div id="scanStep1" style="background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border);">
+      <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">Scan a QR code or enter a book ID</p>
+      <input type="text" id="scanInput" class="login-input" placeholder="Scan QR code or type book ID..." onkeydown="if(event.key==='Enter') processScan()" autofocus>
+      <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px;">Press Enter to confirm</p>
+    </div>
+    
+    <div id="scanStep2" style="display: none; background: var(--glass); padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px solid var(--glass-border);">
+      <h4 id="scanBookTitle" style="margin-bottom: 10px; color: var(--sky);"></h4>
+      <p style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted);">Would you like to borrow this book?</p>
+      <button class="btn-prim" onclick="confirmStudentBorrow()" style="width: 100%; background: #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Confirm Self-Checkout</button>
+    </div>
+    
+    <button class="btn-cancel-m" onclick="closeScanner()" style="margin-top: 24px; width: 100%;">Cancel</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="loginScreen">
+  <div class="login-wrap">
+    <div class="book-anim">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="12" y="8" width="54" height="76" rx="5" fill="url(#la)"/>
+        <rect x="18" y="13" width="54" height="76" rx="5" fill="url(#lb)"/>
+        <line x1="18" y1="13" x2="18" y2="89" stroke="rgba(255,255,255,.18)" stroke-width="2.5"/>
+        <rect x="26" y="25" width="34" height="3" rx="1.5" fill="rgba(255,255,255,.55)"/>
+        <rect x="26" y="33" width="27" height="2.5" rx="1.25" fill="rgba(255,255,255,.32)"/>
+        <rect x="26" y="40" width="31" height="2.5" rx="1.25" fill="rgba(255,255,255,.28)"/>
+        <rect x="26" y="47" width="21" height="2.5" rx="1.25" fill="rgba(255,255,255,.22)"/>
+        <rect x="26" y="54" width="25" height="2.5" rx="1.25" fill="rgba(255,255,255,.18)"/>
+        <rect x="26" y="63" width="16" height="16" rx="3" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+        <text x="34" y="75" font-size="10" fill="rgba(255,255,255,.6)" font-family="serif">B</text>
+        <defs>
+          <linearGradient id="la" x1="12" y1="8" x2="66" y2="84" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#312e81"/><stop offset="1" stop-color="#4c1d95"/>
+          </linearGradient>
+          <linearGradient id="lb" x1="18" y1="13" x2="72" y2="89" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#5b21b6"/><stop offset="1" stop-color="#7c3aed"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <h1 class="login-brand">University of Engineering & Management Jaipur</h1>
+    <p class="login-tagline"> Digital Library</p>
+    <div id="roleSelectionStep">
+      <div class="role-grid">
+        <div class="role-card" onclick="showLoginForm('student')">
+          <span class="role-emoji">🎓</span>
+          <div class="role-name">Student Login</div>
+          <div class="role-desc">Access your library account</div>
+        </div>
+        <div class="role-card teacher-card" onclick="showLoginForm('teacher')">
+          <span class="role-emoji">👩‍🏫</span>
+          <div class="role-name">Admin Login</div>
+          <div class="role-desc">Manage the library system</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loginFormStep" style="display: none; animation: panelIn 0.4s ease;">
+      <h2 id="loginFormTitle" style="font-size: 1.6rem; margin-bottom: 20px; font-family: 'Cormorant Garamond', serif;"></h2>
+      
+      <div class="login-form-wrap" style="max-width: 320px; margin: 0 auto 20px; text-align: left;">
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">User ID</label>
+          <input type="text" id="loginEmail" class="login-input" placeholder="Enter ID">
+        </div>
+        <div style="margin-bottom: 24px;">
+          <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.05em;">Password</label>
+          <input type="password" id="loginPass" class="login-input" placeholder="Enter password">
+        </div>
+        <button class="login-btn" id="loginBtn" onclick="doLogin(event)" style="width: 100%; margin-bottom: 12px;">Login to Portal</button>
+        <button class="btn-ghost" onclick="showRoleSelection()" style="width: 100%;">← Back to Roles</button>
+      </div>
+      
+      <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">
+        <strong>Demo Accounts (Pass: pass123)</strong><br>
+        Student: <strong>u1</strong> | Admin: <strong>u3</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen gone" id="appShell">
+  <div style="display:flex;flex-direction:column;width:100%;height:100%">
+    <header class="hdr">
+      <div class="hdr-brand">
+        <svg class="hdr-logo" viewBox="0 0 36 36" fill="none">
+          <rect x="5" y="3" width="20" height="28" rx="2.5" fill="url(#ha)"/>
+          <rect x="9" y="6" width="20" height="28" rx="2.5" fill="url(#hb)"/>
+          <line x1="9" y1="6" x2="9" y2="34" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/>
+          <rect x="13" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,.5)"/>
+          <rect x="13" y="16" width="9" height="1.5" rx=".75" fill="rgba(255,255,255,.3)"/>
+          <defs>
+            <linearGradient id="ha" x1="5" y1="3" x2="25" y2="31" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#312e81"/><stop offset="1" stop-color="#4c1d95"/>
+            </linearGradient>
+            <linearGradient id="hb" x1="9" y1="6" x2="29" y2="34" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#5b21b6"/><stop offset="1" stop-color="#7c3aed"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="hdr-title">Bibliotheca</span>
+      </div>
+      <nav class="hdr-nav" id="hdrNav"></nav>
+      <div class="hdr-right">
+        <button class="nav-item" id="themeToggle" onclick="toggleTheme()" style="font-size: 1.1rem; padding: 5px 10px; margin-right: 5px;">☀️</button>
+        
+        <div style="position: relative; margin-right: 10px;">
+          <button class="nav-item" onclick="toggleNotifs()" style="font-size: 1.1rem; padding: 5px 10px; position: relative;">
+            🔔
+            <span id="notifBadge" class="notif-badge">0</span>
+          </button>
+          
+          <div id="notifPanel" class="notif-panel">
+            <div class="notif-header">
+              <span>Notifications</span>
+            </div>
+            <div id="notifList" class="notif-list">
+              </div>
+          </div>
+        </div>
+
+        <span class="role-pip" id="rolePip"></span>
+        <button class="logout-btn" onclick="doLogout()">Logout</button>
+        <div class="ham" id="ham" onclick="toggleMob()">
+          <span class="ham-bar"></span><span class="ham-bar"></span><span class="ham-bar"></span>
+        </div>
+      </div>
+    </header>
+    <nav class="mob-nav" id="mobNav"></nav>
+    <div class="app-body" id="appBody"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker registered!', reg.scope))
+        .catch(err => console.error('Service Worker failed:', err));
+    });
+  }
+</script>
+</body>
+</html>
